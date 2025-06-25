@@ -28,7 +28,7 @@
         {% if firstLevelPage.children is not empty %}
           <ul class="docs-sidebar__section-list">
             {% for child in firstLevelPage.children %}
-              <li>
+              <li data-id="{{ child._id }}">
                 <a
                   class="docs-sidebar__section-list-item-wrapper"
                   href="{{ child.uri ? '/' ~ child.uri : '/page/' ~ child._id }}">
