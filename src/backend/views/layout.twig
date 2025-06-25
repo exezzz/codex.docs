@@ -30,6 +30,9 @@
         <aside class="docs__aside-right" id="layout-sidebar-right"></aside>
       </div>
     </div>
+    <script>
+      window.__PAGES__ = {{ menu|json_encode|raw }};
+    </script>
     <script src="/dist/main.bundle.js"></script>
     {% if config.yandexMetrikaId is not empty %}
       <script type="text/javascript" >
