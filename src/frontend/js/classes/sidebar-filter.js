@@ -74,15 +74,21 @@ export default class SidebarFilter {
     let shortcutText = "Ctrl P";
 
     // Собираем content
-    this.pages = (window.__PAGES__ || []).map((p) => {
+    const flat = [];
+
+    (window.__PAGES__ || []).forEach((p) => {
+      flat.push(p);
+      if (Array.isArray(p.children)) {
+        p.children.forEach((c) => flat.push(c));
+      }
+    });
+
+    this.pages = flat.map((p) => {
       const texts = [];
       for (const block of p.body.blocks) {
-        // если в paragraph или header — берем data.text
         if (typeof block.data.text === "string") {
           texts.push(block.data.text);
-        }
-        // если это список — берем каждый пункт
-        else if (Array.isArray(block.data.items)) {
+        } else if (Array.isArray(block.data.items)) {
           texts.push(...block.data.items);
         }
       }
@@ -90,8 +96,6 @@ export default class SidebarFilter {
         _id: p._id,
         title: p.title,
         uri: p.uri,
-        children: p.children,
-        // единый стринг без HTML-тегов
         content: texts.join(" ").replace(/<[^>]+>/g, ""),
       };
     });
@@ -422,20 +426,49 @@ export default class SidebarFilter {
     const hits = this.fuse.search(query);
     const ids = new Set(hits.map((h) => h.item._id));
 
-    this.sections.forEach((sec) => {
-      const sid = sec.dataset.id;
-      const lis = Array.from(sec.querySelectorAll("li[data-id]"));
-      const keep = ids.has(sid) || lis.some((li) => ids.has(li.dataset.id));
+    // подсветка/фокусировка по клавишам «стрелка вверх/вниз»
+    this.searchResults = hits
+      .map((h) => {
+        const id = h.item._id;
+        // сначала пробуем найти заголовок раздела
+        let el = document.querySelector(
+          `section[data-id="${id}"] .${SidebarFilter.CSS.sectionTitle}`
+        );
+        let type = "title";
+        if (!el) {
+          // иначе — это подраздел, ищем div внутри li
+          el = document.querySelector(
+            `li[data-id="${id}"] .${SidebarFilter.CSS.sectionListItem}`
+          );
+          type = "item";
+        }
+        return el ? { element: el, type } : null;
+      })
+      .filter((x) => x);
 
-      if (!keep) {
+    this.sections.forEach((sec) => {
+      const secId = sec.dataset.id;
+      const lis = Array.from(sec.querySelectorAll("li[data-id]"));
+
+      // если раздел сам или один из его пунктов совпал
+      const keepSection =
+        ids.has(secId) || lis.some((li) => ids.has(li.dataset.id));
+
+      if (!keepSection) {
+        // прячем весь раздел
         sec.classList.add(SidebarFilter.CSS.sectionHidden);
       } else {
-        lis.forEach((li) => {
-          if (!ids.has(li.dataset.id)) {
-            li.classList.add(SidebarFilter.CSS.sectionListItemWrapperHidden);
-          }
-        });
+        // разворачиваем раздел
         this.setSectionCollapsed(sec, false);
+
+        // прячем только НЕ совпавшие пункты, а совпавшие оставляем
+        lis.forEach((li) => {
+          const shouldShowItem = ids.has(li.dataset.id);
+          li.classList.toggle(
+            SidebarFilter.CSS.sectionListItemWrapperHidden,
+            !shouldShowItem
+          );
+        });
       }
     });
   }
