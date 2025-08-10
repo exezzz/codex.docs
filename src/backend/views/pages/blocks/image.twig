@@ -11,11 +11,23 @@
 <figure class="block-image">
   <div class="{{ classes.join(' ') }}">
     {% if file.mime and file.mime == 'video/mp4' %}
-      <video autoplay loop muted playsinline>
-        <source src="{{ file.url }}" type="video/mp4">
-      </video>
+      <div class="video-container">
+        <video autoplay loop muted playsinline>
+          <source src="{{ file.url }}" type="video/mp4">
+        </video>
+        <button class="video-fullscreen-btn" title="Fullscreen">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"></path>
+          </svg>
+        </button>
+      </div>
     {% else %}
-      <img src="{{ file.url }}" alt="{{ caption ? caption | striptags : '' }}">
+      <img 
+        src="{{ file.url }}" 
+        alt="{{ caption ? caption | striptags : '' }}"
+        class="zoomable"
+        data-zoom-src="{{ file.url }}"
+      >
     {% endif %}
 
   </div>
